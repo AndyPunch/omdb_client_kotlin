@@ -1,7 +1,7 @@
 package program.java.punch.andr.omdb_client_kotlin.db.dbHelper
 
 import io.reactivex.Completable
-import io.reactivex.Flowable
+import io.reactivex.Observable
 import io.reactivex.Single
 import program.java.punch.andr.omdb_client_kotlin.data.model.Movie
 import program.java.punch.andr.omdb_client_kotlin.db.AppDatabase
@@ -24,8 +24,8 @@ class AppDbHelper @Inject constructor(private val mAppDatabase: AppDatabase) : D
     }
 
 
-    override fun getFavourite(): Flowable<List<Movie>> {
-        return Flowable.fromCallable { mAppDatabase.favouriteMovieDao().getFavouriteMovies() }
+    override fun getFavourite(): Observable<List<Movie>> {
+        return Observable.fromCallable { mAppDatabase.favouriteMovieDao().getFavouriteMovies() }
     }
 
 

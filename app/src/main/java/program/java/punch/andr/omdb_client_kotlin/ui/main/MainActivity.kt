@@ -95,14 +95,18 @@ class MainActivity : BaseActivity(), MainMvpView, OnAddFavouriteClick {
     }
 
     override fun OnAddFavouriteMovieClick(movie: Movie) {
-        val isFavouriteMovieAdded = mPresenter.insertFavouriteMovie(movie)
-        isFavouriteMovieAdded.subscribe({ aBoolean ->
-            if (aBoolean!!) {
-                Toast.makeText(application, R.string.movie_is_added, Toast.LENGTH_LONG).show()
-            } else {
-                Toast.makeText(application, R.string.already_added, Toast.LENGTH_LONG).show()
-            }
-        })
+        mPresenter.insertFavouriteMovie(movie)
+
+    }
+
+    override fun onMovieInserted(aBoolean: Boolean) {
+        if (aBoolean) {
+            Toast.makeText(application, R.string.movie_is_added, Toast.LENGTH_LONG)
+                    .show()
+        } else {
+            Toast.makeText(application, R.string.already_added, Toast.LENGTH_LONG)
+                    .show()
+        }
     }
 
 

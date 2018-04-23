@@ -5,6 +5,7 @@ import android.arch.persistence.room.Room
 import android.content.Context
 import dagger.Module
 import dagger.Provides
+import io.reactivex.disposables.CompositeDisposable
 import program.java.punch.andr.omdb_client_kotlin.db.AppDatabase
 import program.java.punch.andr.omdb_client_kotlin.db.dbHelper.AppDbHelper
 import program.java.punch.andr.omdb_client_kotlin.db.dbHelper.interfaces.DbHelper
@@ -52,5 +53,8 @@ class ApplicationModule {
                 .addCallAdapterFactory(rxJava2CallAdapterFactory)
                 .build()
     }
+
+    @Provides
+    internal fun provideCompositeDisposable(): CompositeDisposable = CompositeDisposable()
 
 }

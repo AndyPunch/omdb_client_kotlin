@@ -1,6 +1,7 @@
 package program.java.punch.andr.omdb_client_kotlin.ui.favourite
 
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import program.java.punch.andr.omdb_client_kotlin.data.model.Movie
 import program.java.punch.andr.omdb_client_kotlin.ui.base.BasePresenter
@@ -12,7 +13,8 @@ import javax.inject.Inject
 
 
 class FavouritePresenter<V : FavouriteMvpView, I : FavouriteMvpInteractor>
-@Inject internal constructor(interactor: I) : BasePresenter<V, I>(interactor = interactor),
+@Inject internal constructor(interactor: I, disposable: CompositeDisposable)
+    : BasePresenter<V, I>(interactor = interactor, compositeDisposable = disposable),
         FavouriteMvpPresenter<V, I> {
 
 
@@ -25,20 +27,24 @@ class FavouritePresenter<V : FavouriteMvpView, I : FavouriteMvpInteractor>
     }
 
     override fun deleteFavourite(movie: Movie) {
-        interactor!!.deleteFavouriteCall(movie)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ getView()?.OnFavouriteDeleted() })
+        interactor?.let {
+            compositeDisposable.add(it.deleteFavouriteCall(movie)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({ getView()?.OnFavouriteDeleted() }))
+        }
     }
 
     override fun getFavourite() {
-        getView()?.showProgress()
-        interactor!!.getFavouriteCall()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnError({ throwable -> getView()?.hideProgress() })
-                .doOnComplete({ getView()?.hideProgress() })
-                .subscribe({ movies -> this@FavouritePresenter.getView()?.onMoviesLoaded(movies) })
+        interactor?.let {
+            getView()?.showProgress()
+            compositeDisposable.add(it.getFavouriteCall()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .doOnError({ throwable -> getView()?.hideProgress() })
+                    .doOnComplete({ getView()?.hideProgress() })
+                    .subscribe({ movies -> this@FavouritePresenter.getView()?.onMoviesLoaded(movies) }))
+        }
     }
 
 

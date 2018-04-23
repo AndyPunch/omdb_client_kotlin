@@ -1,7 +1,7 @@
 package program.java.punch.andr.omdb_client_kotlin.ui.favourite
 
 import io.reactivex.Completable
-import io.reactivex.Flowable
+import io.reactivex.Observable
 import program.java.punch.andr.omdb_client_kotlin.data.model.Movie
 import program.java.punch.andr.omdb_client_kotlin.db.dbHelper.interfaces.DbHelper
 import program.java.punch.andr.omdb_client_kotlin.ui.base.BaseInteractor
@@ -18,7 +18,7 @@ constructor(private val appDbHelper: DbHelper) : BaseInteractor(appDbHelper = ap
     }
 
 
-    override fun getFavouriteCall(): Flowable<List<Movie>> {
+    override fun getFavouriteCall(): Observable<List<Movie>> {
         return appDbHelper.getFavourite()
     }
 

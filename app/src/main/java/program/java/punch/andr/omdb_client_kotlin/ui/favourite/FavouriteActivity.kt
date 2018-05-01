@@ -40,7 +40,7 @@ class FavouriteActivity : BaseActivity(), FavouriteMvpView, OnDeleteFavouriteCli
         setSupportActionBar(toolbar)
         title = getString(R.string.favourite_movies)
         setAdapter()
-        getFavourite()
+
     }
 
     private fun setAdapter() {
@@ -51,6 +51,8 @@ class FavouriteActivity : BaseActivity(), FavouriteMvpView, OnDeleteFavouriteCli
         list_empty_favourite.let { recyclerview_favourite.setEmptyView(it) }
         if (mPresenter.getViewModel().movieViewModelList.size > 0) {
             favouriteAdapter?.addMoviesToAdapter(mPresenter.getViewModel().movieViewModelList)
+        } else {
+            getFavourite()
         }
     }
 

@@ -1,41 +1,47 @@
 package program.java.punch.andr.omdb_client_kotlin.ui.main
 
-import android.content.Intent
+import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.StaggeredGridLayoutManager
+import android.support.v4.app.Fragment
 import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
+import android.view.View
+import dagger.android.DispatchingAndroidInjector
+import dagger.android.support.HasSupportFragmentInjector
 import kotlinx.android.synthetic.main.app_bar.*
 import kotlinx.android.synthetic.main.content_main.*
 import program.java.punch.andr.omdb_client_kotlin.R
-import program.java.punch.andr.omdb_client_kotlin.adapters.MoviesAdapter
-import program.java.punch.andr.omdb_client_kotlin.data.model.Movie
+import program.java.punch.andr.omdb_client_kotlin.archComponents.MoviesViewModel
 import program.java.punch.andr.omdb_client_kotlin.ui.base.BaseActivity
-import program.java.punch.andr.omdb_client_kotlin.ui.favourite.FavouriteActivity
+import program.java.punch.andr.omdb_client_kotlin.ui.main.fragments.favourite.FavouriteFragment
+import program.java.punch.andr.omdb_client_kotlin.ui.main.fragments.main.MainFragment
 import program.java.punch.andr.omdb_client_kotlin.ui.main.interfaces.MainMvpInteractor
 import program.java.punch.andr.omdb_client_kotlin.ui.main.interfaces.MainMvpPresenter
 import program.java.punch.andr.omdb_client_kotlin.ui.main.interfaces.MainMvpView
-import program.java.punch.andr.omdb_client_kotlin.ui.main.interfaces.OnAddFavouriteClick
+import program.java.punch.andr.omdb_client_kotlin.utils.extention.removeFragment
+import program.java.punch.andr.omdb_client_kotlin.utils.extention.replaceFragment
+import program.java.punch.andr.omdb_client_kotlin.utils.extention.setupActionBar
+import program.java.punch.andr.omdb_client_kotlin.utils.extention.toast
 import javax.inject.Inject
 
 
-class MainActivity : BaseActivity(), MainMvpView, OnAddFavouriteClick {
+class MainActivity : BaseActivity(), MainMvpView, HasSupportFragmentInjector {
 
-
-    private var layoutManager: RecyclerView.LayoutManager? = null
-
-    private var moviesAdapter: MoviesAdapter? = null
 
     @Inject
     internal lateinit var mPresenter: MainMvpPresenter<MainMvpView, MainMvpInteractor>
+
+    @Inject
+    internal lateinit var fragmentDispatchingAndroidInjector: DispatchingAndroidInjector<Fragment>
+
+    lateinit var moviesViewModel: MoviesViewModel
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        moviesViewModel = ViewModelProviders.of(this).get(MoviesViewModel::class.java)
         mPresenter.onAttach(this)
         setUp()
     }
@@ -44,31 +50,8 @@ class MainActivity : BaseActivity(), MainMvpView, OnAddFavouriteClick {
     override fun setUp() {
         setSupportActionBar(toolbar)
         title = getString(R.string.app_name)
-        setAdapter()
-        setOnClickListeners()
+        setOnClick()
 
-    }
-
-    fun setAdapter() {
-        layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
-        moviesAdapter = MoviesAdapter(this, this)
-        recyclerview.layoutManager = layoutManager
-        recyclerview.adapter = moviesAdapter
-        list_empty.let { recyclerview.setEmptyView(it) }
-        if (mPresenter.getViewModel().movieViewModelList.size > 0) {
-            moviesAdapter?.addMoviesToAdapter(mPresenter.getViewModel().movieViewModelList)
-        }
-    }
-
-
-    override fun onMoviesLoaded(moviesList: List<Movie>?) {
-        if (moviesList != null) {
-            mPresenter.getViewModel().movieViewModelList = moviesList
-            moviesAdapter?.addMoviesToAdapter(moviesList)
-        } else {
-            moviesAdapter?.clearMovies()
-            list_empty.setText(R.string.no_results)
-        }
     }
 
 
@@ -78,58 +61,96 @@ class MainActivity : BaseActivity(), MainMvpView, OnAddFavouriteClick {
     }
 
 
-    private fun setOnClickListeners() {
+    private fun setOnClick() {
         search_button.setOnClickListener {
             if (isNetworkConnected()) {
                 hideSoftKeyboard(this)
                 val movieTitle = search_edittext.getText().toString().trim { it <= ' ' }
                 if (!TextUtils.isEmpty(movieTitle)) {
-                    mPresenter.getMovies(movieTitle)
+                    moviesViewModel.movieViewModelList = emptyList()
+                    moviesViewModel.isSearchError = false
+                    setMovies(movieTitle)
                 } else {
-                    Toast.makeText(this, R.string.title_is_empty, Toast.LENGTH_LONG).show()
+                    toast(getString(R.string.title_is_empty))
                 }
             } else {
-                Toast.makeText(this, R.string.network_not_aviable, Toast.LENGTH_LONG).show()
+                toast(getString(R.string.network_not_aviable))
             }
         }
     }
 
-    override fun OnAddFavouriteMovieClick(movie: Movie) {
-        mPresenter.insertFavouriteMovie(movie)
-
+    fun setMovies(title: String) {
+        replaceFragment(MainFragment.newInstance(title), R.id.container)
     }
 
-    override fun onMovieInserted(aBoolean: Boolean) {
-        if (aBoolean) {
-            Toast.makeText(application, R.string.movie_is_added, Toast.LENGTH_LONG)
-                    .show()
-        } else {
-            Toast.makeText(application, R.string.already_added, Toast.LENGTH_LONG)
-                    .show()
-        }
+    override fun onFragmentAttached() {
+    }
+
+    override fun onFragmentDetached(tag: String) {
+        supportFragmentManager?.removeFragment(tag = tag)
     }
 
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_favourite, menu)
+        getMenuInflater().inflate(R.menu.menu_favourite, menu)
+        val favouriteItem = menu.findItem(R.id.action_favourie)
 
+        favouriteItem.isVisible = moviesViewModel.isSearchVisible
         return true
     }
 
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
-
-
         if (id == R.id.action_favourie) {
-
-            val favouriteIntent = Intent(this, FavouriteActivity::class.java)
-            startActivity(favouriteIntent)
-
+            hideSoftKeyboard(this)
+            replaceFragment(FavouriteFragment.newInstance(), R.id.container, FavouriteFragment.TAG)
+            invalidateOptionsMenu()
+        } else if (id == android.R.id.home) {
+            onBackPressed()
+            moviesViewModel.isSearchVisible = true
+            invalidateOptionsMenu()
         }
 
         return super.onOptionsItemSelected(item)
     }
 
+    fun setViewSettings(tag: String) {
+        when (tag) {
+            MainFragment.TAG -> {
+                moviesViewModel.isSearchVisible = true
+                setupActionBar(R.id.toolbar) {
+                    title = getString(R.string.app_name)
+                    setDisplayHomeAsUpEnabled(false)
+                    setDisplayShowHomeEnabled(false)
 
+                }
+
+            }
+
+            FavouriteFragment.TAG -> {
+                moviesViewModel.isSearchVisible = false
+                setupActionBar(R.id.toolbar) {
+                    title = getString(R.string.favourite)
+                    setDisplayHomeAsUpEnabled(true)
+                    setDisplayShowHomeEnabled(true)
+
+                }
+            }
+        }
+
+        setSearchVisivility()
+
+    }
+
+    private fun setSearchVisivility() {
+        if (moviesViewModel.isSearchVisible) {
+            search.visibility = View.VISIBLE
+        } else {
+            search.visibility = View.GONE
+
+        }
+    }
+
+    override fun supportFragmentInjector() = fragmentDispatchingAndroidInjector
 }

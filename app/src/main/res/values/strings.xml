@@ -11,4 +11,6 @@
     <string name="favourite_movies">Favourite movies</string>
     <string name="favourite_deleted">Favourite is deleted</string>
     <string name="empty">Empty</string>
+    <string name="favourite">Favourite</string>
+    <string name="empty_str"> </string>
 </resources>

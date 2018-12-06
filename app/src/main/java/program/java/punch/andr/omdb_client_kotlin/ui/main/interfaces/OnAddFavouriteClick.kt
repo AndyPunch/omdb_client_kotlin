@@ -1,9 +1,0 @@
-package program.java.punch.andr.omdb_client_kotlin.ui.main.interfaces
-
-import program.java.punch.andr.omdb_client_kotlin.data.model.Movie
-
-
-interface OnAddFavouriteClick {
-
-    fun OnAddFavouriteMovieClick(movie: Movie)
-}

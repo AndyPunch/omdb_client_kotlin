@@ -4,12 +4,9 @@ import android.app.Activity
 
 interface BaseMvpView {
 
-    fun showProgress()
-
-    fun hideProgress()
-
     fun isNetworkConnected(): Boolean
-
     fun hideSoftKeyboard(activity: Activity)
+    fun showSoftKeyboard(activity: Activity)
+    fun showErrorDialog(message: String, onDismiss: () -> Unit = {})
 
 }

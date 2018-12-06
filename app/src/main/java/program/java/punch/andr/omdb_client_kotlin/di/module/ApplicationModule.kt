@@ -6,9 +6,10 @@ import android.content.Context
 import dagger.Module
 import dagger.Provides
 import io.reactivex.disposables.CompositeDisposable
-import program.java.punch.andr.omdb_client_kotlin.db.AppDatabase
-import program.java.punch.andr.omdb_client_kotlin.db.dbHelper.AppDbHelper
-import program.java.punch.andr.omdb_client_kotlin.db.dbHelper.interfaces.DbHelper
+import program.java.punch.andr.omdb_client_kotlin.data.database.AppDatabase
+import program.java.punch.andr.omdb_client_kotlin.data.database.repository.FavouriteRepo
+import program.java.punch.andr.omdb_client_kotlin.data.database.repository.FavouriteRepository
+import program.java.punch.andr.omdb_client_kotlin.data.network.ApiHelper
 import program.java.punch.andr.omdb_client_kotlin.utils.AppConstants
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
@@ -26,10 +27,10 @@ class ApplicationModule {
     internal fun provideAppDatabase(context: Context): AppDatabase = Room.databaseBuilder(context,
             AppDatabase::class.java, AppConstants.DB_NAME).build()
 
-    @Provides
     @Singleton
-    internal fun provideDbHelper(appDbHelper: AppDbHelper): DbHelper {
-        return appDbHelper
+    @Provides
+    internal fun provideApiHelper(retrofit: Retrofit): ApiHelper {
+        return retrofit.create<ApiHelper>(ApiHelper::class.java)
     }
 
 
@@ -56,5 +57,11 @@ class ApplicationModule {
 
     @Provides
     internal fun provideCompositeDisposable(): CompositeDisposable = CompositeDisposable()
+
+
+    @Provides
+    @Singleton
+    internal fun provideFavouriteRepoHelper(appDatabase: AppDatabase): FavouriteRepo =
+            FavouriteRepository(appDatabase.favouriteMovieDao())
 
 }
